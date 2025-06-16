@@ -1,0 +1,98 @@
+{
+  "name": "smus-admin-agent-vs-extension",
+  "displayName": "Amazon DataZone Extension",
+  "description": "VS Code extension for accessing Amazon DataZone domain entities",
+  "version": "0.0.1",
+  "publisher": "your-publisher-name",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "amazon",
+    "datazone",
+    "aws",
+    "data",
+    "catalog"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "amazon-datazone-container",
+          "title": "Amazon DataZone",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "amazon-datazone-container": [
+        {
+          "id": "amazon-datazone.domainsView",
+          "name": "Domain",
+          "type": "tree"
+        },
+        {
+          "id": "amazon-datazone.catalogView",
+          "name": "Catalog",
+          "type": "tree"
+        },
+        {
+          "id": "amazon-datazone.dataAgentView",
+          "name": "Data Agent",
+          "type": "webview"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "amazon-datazone.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "amazon-datazone.openDataAgent",
+        "title": "Open Data Agent Chat",
+        "category": "Amazon DataZone"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "amazon-datazone.refresh",
+          "when": "view == amazon-datazone.domainsView || view == amazon-datazone.catalogView",
+          "group": "navigation"
+        },
+        {
+          "command": "amazon-datazone.openDataAgent",
+          "when": "view == amazon-datazone.dataAgentView",
+          "group": "navigation",
+          "title": "Open Chat"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^16.18.126",
+    "@types/vscode": "^1.74.0",
+    "typescript": "^4.9.4",
+    "vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-datazone": "^3.0.0",
+    "child_process": "^1.0.2",
+    "node-fetch": "^3.3.2"
+  }
+} 

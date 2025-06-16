@@ -1,0 +1,39 @@
+"""Configuration module for SMUS Admin Agent."""
+
+import os
+from typing import Optional
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+
+class Config:
+    """Configuration class for the SMUS Admin Agent."""
+    
+    def __init__(self):
+        self.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
+        self.default_model = os.getenv("DEFAULT_MODEL", "claude-3-5-sonnet-20241022")
+        self.max_tokens = int(os.getenv("MAX_TOKENS", "4096"))
+        self.temperature = float(os.getenv("TEMPERATURE", "0.7"))
+        self.mcp_server_path = os.getenv("MCP_SERVER_PATH")
+        
+        if not self.anthropic_api_key:
+            raise ValueError(
+                "ANTHROPIC_API_KEY environment variable is required. "
+                "Please set it in your environment or .env file."
+            )
+    
+    @property
+    def is_configured(self) -> bool:
+        """Check if the configuration is valid."""
+        return bool(self.anthropic_api_key)
+
+    @property
+    def is_mcp_configured(self) -> bool:
+        """Check if the MCP server path is configured."""
+        return bool(self.mcp_server_path)
+
+
+# Global configuration instance
+config = Config() 
