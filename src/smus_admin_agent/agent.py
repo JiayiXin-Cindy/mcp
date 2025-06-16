@@ -7,8 +7,10 @@ from contextlib import AsyncExitStack
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, AsyncGenerator, Dict, List
+import re
 
-from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
+
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage, BaseMessage
 from langchain_core.tools import BaseTool
 from langchain_anthropic import ChatAnthropic
 from langgraph.graph import StateGraph, START, END
@@ -267,13 +269,20 @@ class SMUSAdminAgent:
             session.add_message(HumanMessage(content=user_input))
             
             # Prepare messages with conversation history
-            messages = session.get_recent_messages() + [HumanMessage(content=user_input)]
+            messages = session.get_recent_messages() + [
+                SystemMessage(content=(
+                "You are a helpful assistant.\n"
+                "When you identify a tool that need to be called based on user input, please output exactly one JSON snippet with the tool name, like:\n"
+                '{"tool_name": "get_asset"}\n'
+                "After that, continue your natural language answer."
+            )),HumanMessage(content=user_input)]
             
             # Use LLM with tools if available, otherwise regular LLM
             llm_to_use = getattr(self, 'llm_with_tools', self.llm)
             
             response_content = ""
-            
+
+            # Regex to extract JSON snippet with tool_name            
             # Stream response from LLM
             async for chunk in llm_to_use.astream(messages):
                 # Check for tool calls first
@@ -372,7 +381,69 @@ class SMUSAdminAgent:
         response_parts = []
         async for chunk in self.stream_response(user_input, session_id):
             response_parts.append(chunk)
-        return "".join(response_parts)
+        full_response = "".join(response_parts)
+        return full_response
+    
+    async def test_response(
+        self, 
+        user_input: str, 
+        session_id: str = "default"
+    ) -> str:
+        """Get identified tool from the agent."""
+        try:
+            session = self.get_or_create_session(session_id)
+            
+            # Ensure MCP client is connected and tools are set up
+            await self._ensure_mcp_client()
+            
+            # Add user message to session
+            session.add_message(HumanMessage(content=user_input))
+            
+            # Prepare messages with conversation history
+            messages = session.get_recent_messages() + [
+                SystemMessage(content=(
+                    "You are an IT admin.\n"
+                    """
+                    Please think step by step to address the question. 
+
+                    As the first step, please identify if a tool calling is needed. If needed, please response the tool name first. 
+
+                    As the next step, please identify if any input parameter is needed. 
+                    
+
+                    """
+
+
+
+
+                    "Do not answer the user's question, only identify the tool that must be called based on the user input.\n"
+                    "Output exactly and only the tool name as a single word (e.g., get_asset).\n"
+                    "Output nothing else but the tool name.\n"
+                    "If no tool is identified, output exactly: None\n"
+                    "Output should be on a single line.\n"
+                    "Example outputs: 'get_asset', 'None'"
+                )),
+                HumanMessage(content=user_input)
+            ]
+            
+            llm_to_use = getattr(self, 'llm_with_tools', self.llm)
+            response_content = ""
+
+            async for chunk in llm_to_use.astream(messages):
+                content = getattr(chunk, 'content', '')
+                if isinstance(content, list):
+                    response_content += "".join([part['text'] for part in content if 'text' in part])
+                else:
+                    response_content += str(content)
+
+            if response_content:
+                session.add_message(AIMessage(content=response_content))
+                return response_content.strip()
+            
+        except Exception as e:
+            print(f"Error: {str(e)}")
+            return "Error"
+
     
     def get_session_history(self, session_id: str) -> List[Dict[str, Any]]:
         """Get the history of a session in a serializable format."""
