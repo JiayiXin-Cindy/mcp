@@ -28,6 +28,13 @@ except ImportError:
     StdioServerParameters = None
     stdio_client = None
 
+import pandas as pd
+import re
+from tqdm.asyncio import tqdm
+
+DATASET_PATH = "/Users/jiayixin/Desktop/smus_test.csv"
+df = pd.read_csv(DATASET_PATH)
+
 
 class MCPTool(BaseTool):
     """A LangChain tool that wraps an MCP tool."""
@@ -383,66 +390,78 @@ class SMUSAdminAgent:
             response_parts.append(chunk)
         full_response = "".join(response_parts)
         return full_response
-    
+
     async def test_response(
         self, 
-        user_input: str, 
         session_id: str = "default"
     ) -> str:
-        """Get identified tool from the agent."""
         try:
             session = self.get_or_create_session(session_id)
             
-            # Ensure MCP client is connected and tools are set up
-            await self._ensure_mcp_client()
+            # Add SystemMessage to session once before the loop
+            system_message = SystemMessage(content=(
+                """
+
+                You are an IT admin tool selector. Your task is to analyze the user input and output exactly one word: the name of the tool to call.
+                Regardless of the user question or the required parameters, only output which tool best matches the user's request. 
+
+                RULES:
+
+                Output ONLY the tool name (e.g., "get_asset")
+
+                If no tool matches, output EXACTLY: "None"
+
+                NEVER add any other text, explanation, or formatting
+
+                NEVER ask for parameters or additional information
+
+                NEVER respond with complete sentences
+
+                NEVER respond the user question or request
+
+                BAD EXAMPLES (NEVER DO THIS):
+                "GetConnection - to retrieve connection information..."
+                "To search for a specific asset..."
+                "Please provide parameters for..."
+
+                GOOD EXAMPLES (ONLY DO THIS):
+                "get_connection"
+                "search"
+                "None"
+
+                Now analyze this input and output ONLY the tool name
+
+                REMEMBER: If you output ANYTHING other than the tool name or "none", the system will crash.
+
+                """
+            ))
+            session.add_message(system_message)
             
-            # Add user message to session
-            session.add_message(HumanMessage(content=user_input))
-            
-            # Prepare messages with conversation history
-            messages = session.get_recent_messages() + [
-                SystemMessage(content=(
-                    "You are an IT admin.\n"
-                    """
-                    Please think step by step to address the question. 
+            for index in tqdm(range(len(df))):
+                row = df.iloc[index]
+                user_input = row["question"]
+                llm_to_use = getattr(self, 'llm_with_tools', self.llm)
+                response_content = ""
 
-                    As the first step, please identify if a tool calling is needed. If needed, please response the tool name first. 
+                # Use only SystemMessage + current question (independent processing)
+                current_messages = [system_message, HumanMessage(content=user_input)]
+                async for chunk in llm_to_use.astream(current_messages):
+                    content = getattr(chunk, 'content', '')
+                    if isinstance(content, list):
+                        response_content += "".join([part['text'] for part in content if 'text' in part])
+                    else:
+                        response_content += str(content)
 
-                    As the next step, please identify if any input parameter is needed. 
-                    
-
-                    """
-
-
-
-
-                    "Do not answer the user's question, only identify the tool that must be called based on the user input.\n"
-                    "Output exactly and only the tool name as a single word (e.g., get_asset).\n"
-                    "Output nothing else but the tool name.\n"
-                    "If no tool is identified, output exactly: None\n"
-                    "Output should be on a single line.\n"
-                    "Example outputs: 'get_asset', 'None'"
-                )),
-                HumanMessage(content=user_input)
-            ]
-            
-            llm_to_use = getattr(self, 'llm_with_tools', self.llm)
-            response_content = ""
-
-            async for chunk in llm_to_use.astream(messages):
-                content = getattr(chunk, 'content', '')
-                if isinstance(content, list):
-                    response_content += "".join([part['text'] for part in content if 'text' in part])
-                else:
-                    response_content += str(content)
-
-            if response_content:
-                session.add_message(AIMessage(content=response_content))
-                return response_content.strip()
+                if response_content:
+                    session.add_message(AIMessage(content=response_content))
+                    df.at[index, "api_called"] = ''.join(word.capitalize() for word in response_content.strip().split('_'))
             
         except Exception as e:
             print(f"Error: {str(e)}")
-            return "Error"
+
+        output_path = "/Users/jiayixin/Desktop/results.csv"
+        df.to_csv(output_path, index=False)
+        print(f"✅ Results saved to: {output_path}")
 
     
     def get_session_history(self, session_id: str) -> List[Dict[str, Any]]:

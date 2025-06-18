@@ -15,7 +15,7 @@ class Config:
         self.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
         self.default_model = os.getenv("DEFAULT_MODEL", "claude-3-5-sonnet-20241022")
         self.max_tokens = int(os.getenv("MAX_TOKENS", "4096"))
-        self.temperature = float(os.getenv("TEMPERATURE", "0.7"))
+        self.temperature = float(os.getenv("TEMPERATURE", "0.1"))
         self.mcp_server_path = os.getenv("MCP_SERVER_PATH")
         
         if not self.anthropic_api_key:
