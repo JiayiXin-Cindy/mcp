@@ -384,7 +384,10 @@ def register_tools(mcp: FastMCP):
         Gets a connection in Amazon DataZone. A connection enables you to connect your resources
         (domains, projects, and environments) to external resources and services.
 
-        This is specifically for retrieving DataZone connections and should be used in the DataZone MCP server.
+        Connections are credentials + config for accessing a system, while data source is a specific location where your data resides using a connection.
+
+        related tools:
+        - get_data_source: get detailed information about one specific data source (a data locatin)
 
         Args:
             domain_identifier (str): The ID of the domain where the connection exists.
@@ -551,7 +554,10 @@ def register_tools(mcp: FastMCP):
     @mcp.tool()
     async def get_environment_blueprint(domain_identifier: str, identifier: str) -> Any:
         r"""
-        Gets an Amazon DataZone environment blueprint.
+        Retrieves metadata and definition of an environment blueprint.
+
+        related tools:
+        - get_environment_blueprint_configuration: Retrieves the configuration schema and parameters that must be provided when provisioning an environment from a given blueprint.
 
         Args:
             domain_identifier (str): The ID of the domain in which this blueprint exists.
@@ -621,6 +627,11 @@ def register_tools(mcp: FastMCP):
     ) -> Any:
         r"""
         Gets an Amazon DataZone environment blueprint configuration.
+
+        Retrieves the configuration schema and parameters that must be provided when provisioning an environment from a given blueprint.
+
+        related tools:
+        - get_environment_blueprint: Retrieves metadata and definition of an environment blueprint.
 
         Args:
             domain_identifier (str): The ID of the domain where where this blueprint exists.

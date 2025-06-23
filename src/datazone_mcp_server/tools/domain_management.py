@@ -897,7 +897,17 @@ def register_tools(mcp: FastMCP):
         sort: Optional[Dict[str, str]] = None,
     ) -> Any:
         """
-        Searches for assets in Amazon DataZone.
+        Search across **multiple entity types**, such as: assets, glossary, glossary term, data product, etc. based on keywords, metadata, or filters.
+
+        This API is designed for **broad discovery**, not detailed inspection of specific items.
+
+        Do **not** use this if the user asks for detailed information about a known asset.
+
+        Use when:
+        - A user is **exploring** datasets by theme (e.g., “sales” or “IoT”)
+        - Searching by keyword, tag, or business term
+        - Filtering results by project, type, or glossary
+
 
         Args:
             domain_identifier (str): The identifier of the Amazon DataZone domain
@@ -1108,7 +1118,9 @@ def register_tools(mcp: FastMCP):
         domain_identifier: str, user_identifier: str, user_type: Optional[str] = None
     ) -> Any:
         r"""
-        Retrieves the user profile in a specified Amazon DataZone domain for a given user.
+        Retrieves the user profile in a specified Amazon DataZone domain for one given user.
+
+        get_user_profile is for retrieving a specific user's details (especially related to roles and access), while search_user_profiles is for discovering users based on filters.
 
         Args:
             domain_identifier (str): The ID of the Amazon DataZone domain from which to retrieve the user profile.
@@ -1202,6 +1214,8 @@ def register_tools(mcp: FastMCP):
         Searches for user profiles within a specified Amazon DataZone domain.
 
         This API supports filtering results by user type and search text, as well as pagination through `maxResults` and `nextToken`.
+
+        get_user_profile is for retrieving a specific user's details (especially related to roles and access), while search_user_profiles is for discovering users based on filters.
 
         Args:
             domain_identifier (str): The identifier of the Amazon DataZone domain in which to perform the search.

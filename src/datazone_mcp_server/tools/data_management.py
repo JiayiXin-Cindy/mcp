@@ -17,7 +17,21 @@ def register_tools(mcp: FastMCP):
         domain_identifier: str, asset_identifier: str, revision: Optional[str] = None
     ) -> Any:
         """
-        Retrieves detailed information about a specific asset in Amazon DataZone.
+        Retrieves detailed information about one specific asset (specified by user) in Amazon DataZone.
+
+        Use this API when you want to inspect or manage a particular **known asset** dataset, or table and want to retrieve its:
+        - Full metadata (business and technical)
+        - Lineage information
+        - Forms and glossary terms
+        - Time-series details
+        - Revision history
+        - Access and listing info
+
+        Data asset is a specific dataset or table, while data source is a location where your data resides.
+
+        related tools:
+        - search: use when user is **trying to discover or explore** unknown assets based on keywords, metadata, or filters.
+        - get_data_source: get detailed information about one specific data source in a domain.
 
         Args:
             domain_identifier (str): The ID of the domain containing the asset
@@ -590,7 +604,12 @@ def register_tools(mcp: FastMCP):
         sort: Optional[Dict[str, str]] = None,
     ) -> Any:
         """
-        Searches listings (records of assets) in Amazon DataZone with various filtering and sorting options.
+        Search published **data asset listings** in Amazon DataZone using keyword, filter, and sort options.
+
+        Use it to search only within published data asset listings.
+
+        related tools:
+        - search: Use only when the user needs general discovery across **all** entity types (e.g., glossary terms, data products).
 
         Args:
             domain_identifier (str): The ID of the domain to search in
@@ -730,7 +749,20 @@ def register_tools(mcp: FastMCP):
     @mcp.tool()
     async def get_data_source(domain_identifier: str, identifier: str) -> Any:
         """
-        Retrieves detailed information about a specific data source in Amazon DataZone.
+        Retrieves detailed information about a **specific, known data source** in Amazon DataZone.
+
+        Use this API when the user mentions a **specific data source by name, type, or context** (e.g., “Redshift data source in analytics domain”) and wants details like:
+        - Connection settings
+        - Ingestion configuration
+        - Authentication and scheduling details
+        - Last run status and errors
+
+        Data source is a location that defines where your data resides, while data asset is a specific dataset or table.
+        Connections are credentials + config for accessing a system, while data source is a specific location where your data resides using a connection.
+
+        related tools:
+        - list_data_sources: retrieve ea list of data sources in a domain by name, status, type, etc.
+        - get_asset: get detailed information about one specific data asset in a data source.
 
         Args:
             domain_identifier (str): The ID of the domain where the data source exists
@@ -1314,7 +1346,11 @@ def register_tools(mcp: FastMCP):
     @mcp.tool()
     async def get_subscription(domain_identifier: str, identifier: str) -> Any:
         """
-        Gets a subscription in Amazon DataZone.
+        Retrieve all information about a specific subscription in Amazon DataZone, including the data assets it grants access to.
+
+        related tools:
+        - list_subscriptions: list all subscriptions in a domain by name, status, etc.
+        - search_listings: search for listings in a domain by name, description, filter, etc., while get_subscription is used to find assets whithin one specific subscription.
 
         Args:
             domain_identifier (str): The ID of the Amazon DataZone domain in which the subscription exists
@@ -1535,7 +1571,14 @@ def register_tools(mcp: FastMCP):
         data_source_type: Optional[str] = None,
     ) -> Any:
         """
-        Lists all form types available in an Amazon DataZone domain.
+        Retrieve a list of data sources in Datazone domain
+
+        Use this API when the user is **browsing, searching, or filtering** data sources — especially if they **don’t know the exact ID** or want to find a list to choose from.
+        This is **not** the correct API if the user asks for config details of a known data source — use `get_data_source` in that case.
+
+
+        related tools:
+        get_data_source: Retrieves detailed information about a known data source. Use get_data_source when you want to fetch info about the connection details, authentication settings, or ingestion configuration of a particular data source.
 
         Args:
             domainIdentifier (str): The identifier of the Amazon DataZone domain in which to list the data sources.

@@ -59,7 +59,11 @@ def register_tools(mcp: FastMCP):
     @mcp.tool()
     async def get_project(domain_identifier: str, project_identifier: str) -> Any:
         """
-        Retrieves detailed information about a specific project in Amazon DataZone.
+        Retrieves detailed information, metadata and configuration, of a specific project in Amazon DataZone.
+
+        Use this API when the user is asking about a **known project by name or context** and wants to:
+        - View deployment status, user roles, or configurations
+        - Audit metadata for compliance or review
 
         Args:
             domain_identifier (str): The ID of the domain containing the project
@@ -444,7 +448,7 @@ def register_tools(mcp: FastMCP):
         sort_order: Optional[str] = None,
     ) -> Any:
         """
-        Lists the memberships of a specified Amazon DataZone project within a domain.
+        Lists all users (or groups) who are members of a given project, and their roles
 
         Args:
             domainIdentifier (str): The identifier of the Amazon DataZone domain.
